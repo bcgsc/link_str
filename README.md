@@ -13,10 +13,30 @@ This repository contains Python scripts developed to:
 ## Usage
 ### IRR extraction
 1. Identify barcodes of molecules that span target region and extract reads using barcodes
+    ```
+    python extract_irr.py
+    ```    
+    - input:
+    - output:
 
 2. Identify IRRs from reads extracted in step 1
+    ```
+    python id_irr.py
+    ```
+    - input:
+    - output:
 
 ### Jaccard index size estimation
 1. Profile random locations genome-wide to create database from comparisons in step 2
+    ```
+    python model_span.py
+    ```
+    - input:
+    - output:
 
 2. Match JI and barcode tallies of target regions against database to generate size estimates
+    ```
+    python estimate_span.py
+    ```
+    - input:
+    - output:
