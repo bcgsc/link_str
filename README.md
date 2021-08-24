@@ -1,8 +1,8 @@
 # Analysis scripts developed for genotyping STRs in linked-read data
 
 This repository contains Python scripts developed to:
-- extract in-repeat repeats (IRRs) using barcode from linked-read alignments
-- estimate sizes of genomic intervals by calculating Jaccard index (JI) of barcode sharing
+- extract in-repeat repeats (IRRs) using barcode from linked-read alignments ([IRR extraction](irr/README.md))
+- estimate sizes of genomic intervals by calculating Jaccard index (JI) of barcode sharing ([Distance estimate](jaccard_index/README.md))
 
 ## Dependancies
 - NumPy
@@ -10,33 +10,6 @@ This repository contains Python scripts developed to:
 - pybedtools
 - pysam
 
-## Usage
-### IRR extraction
-1. Identify barcodes of molecules that span target region and extract reads using barcodes
-    ```
-    python extract_irr.py
-    ```    
-    - input:
-    - output:
+Author: [Readman Chiu](mailto:rchiu@bcgsc.ca)
 
-2. Identify IRRs from reads extracted in step 1
-    ```
-    python id_irr.py
-    ```
-    - input:
-    - output:
-
-### Jaccard index size estimation
-1. Profile random locations genome-wide to create database from comparisons in step 2
-    ```
-    python model_span.py
-    ```
-    - input:
-    - output:
-
-2. Match JI and barcode tallies of target regions against database to generate size estimates
-    ```
-    python estimate_span.py
-    ```
-    - input:
-    - output:
+:copyright: Canada's Michael Smith Genome Sciences Centre, BC Cancer
