@@ -2,17 +2,16 @@
 
 This workflow is designed for estimating distances/sizes of genomic intervals by leveraging the inverse relationship between distance (_d_) and amount of barcode sharing - measured by the Jaccard index (_JI_).
 
-_JI_ is calculated as the ratio of the intersection to the union of barcodes between the 2 flanking regions of a genomic interval.
+_JI_ is calculated as the ratio of the intersection to the union of barcodes that span the 2 flanking regions of a genomic interval.
 
-We obtained a size estimate of a genomic (test) region in 2 steps:
+We obtain a size estimate of a genomic (test) region in 2 steps:
 
-1. Compile a database (model file) composed of _JI_ profiles of a lot of random locations with a range of sizes in the reference genome 
+1. Compile a database (model) composed of _JI_ profiles of a lot of random locations with difference size intervals in the reference genome 
 
-    A _JI_ profile for a given interval corresponds to the tuple: (_NA_, _NB_, _JAB_) where
+    A _JI_ profile for a given interval corresponds to a tuple: (_NA_, _NB_, _JAB_) where
     - _NA_ = # barcodes spanning the left flanking region
     - _NB_ = # barcodes spanning the right flanking region
     - _JAB_ = _JI_ of the given interval
-
 
     ```
     python model_span.py.py <BAM> <Dmin> <Dmax> <s> <m> <w> <out>
@@ -28,26 +27,27 @@ We obtained a size estimate of a genomic (test) region in 2 steps:
     - `out` output file
     
     Some important arguments:
+	- `--cfg` configuration file specifying the locations of the chromsome sizes, gaps, and segdups files of the reference genome. See [example](genomes.cfg) for format
     - `--tech` "10x" (default) or "stlfr" or "tell_seq"
     - `--hap` "1" or "2", only use alignments of this haplotpye (specified by `HP` tag in BAM)
     - `--sw` window size on each side of the target region to identify barcodes and determine their spans Default: 200,000
-    - `--x_only` pick positions from chrX only
-    - `--auto_only` pick positions from authosomes only
+    - `--x_only` pick locations from chrX only
+    - `--auto_only` pick locations from authosomes only
     - `--nprocs` number of processes to use for parallelization
-    - `--random_all` By default, `m` "seed" positions will be chosen and a number of intervals (based on `Dmin`, `Dmax`, and `s`) with the same starting coordinate will be created for each position. `random_all` will randomize all positions 
-    - `--good_barcodes` a text file of barcodes (one-per-line) to only use
+    - `--random_all` By default, `m` "seed" positions will be chosen and a number of intervals (based on `Dmin`, `Dmax`, and `s`) with the same starting coordinate will be created for each position. `random_all` will randomize all positions (starting positions all different) 
+    - `--good_barcodes` a text file of barcodes (one-per-line) to use only
     - `--no_cov` don't determine or output coverage for each interval (**RECOMMENDED**)
     
-    Output (model file) columns: (tab delimited): 
+    Output (model) columns: (tab delimited): 
     - `JAB` - _JI_ at `pos`
     - `NA` # barcodes spanning the left flanking region
     - `NB` # barcodes spanning the right flanking region
     - `d` distance/size of interval
     - `pos` genomic coordinate of interval
-    - `covA` coverage of left flanking region (won't be reported if `--no_cov`)
-    - `covB` coverage of right flanking region (won't be reported if `--no_cov`)
+    - `covA` coverage of left flanking region (won't be reported if `--no_cov` used)
+    - `covB` coverage of right flanking region (won't be reported if `--no_cov` used)
 
-2. Compute the _JI_ profile of the test region and extract the locations with the closet profile from the database
+2. Compute the _JI_ profile of the test region and extract the locations with the closet profile from the database (model)
 
     This step will identify the intervals characterized in step 1 that have the closest (miniumum distance) _JI_ profiles to the test region. The sizes of these intervals will then be the basis of the final size estimate of the test region:
     - size estimate = median of sizes of closest intervals
@@ -60,7 +60,7 @@ We obtained a size estimate of a genomic (test) region in 2 steps:
     ```
     Inputs:
     - `BAM` LongRanger processed BAM for "10x" or "tell_seq", where barcodes were extracted from `BX` tags. For "stlfr" BAMs, barcodes were extracted from read names
-    - `bed` test region/intervals in BED format
+    - `bed` test intervals in BED format
     - `models` output from step 1 of the same `BAM` (can be more than one e.g. characterized with different interval sizes)
     - `out` output file
  
