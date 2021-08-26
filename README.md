@@ -1,7 +1,7 @@
 # Analysis scripts developed for genotyping STRs in linked-read data
 
 This repository contains Python scripts developed to:
-- extract in-repeat repeats (IRRs) using barcode from linked-read alignments ([IRR extraction](irr/README.md))
+- extract in-repeat repeats (IRRs) using barcodes from linked-read alignments ([IRR extraction](irr/README.md))
 - estimate sizes of genomic intervals by calculating Jaccard index (JI) of barcode sharing ([distance estimate](jaccard_index/README.md))
 
 ## Dependancies
