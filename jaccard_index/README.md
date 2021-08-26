@@ -12,7 +12,8 @@ We obtained a size estimate of a genomic (test) region in 2 steps:
     - _NA_ = # barcodes spanning the left flanking region
     - _NB_ = # barcodes spanning the right flanking region
     - _JAB_ = _JI_ of the given interval
-    
+
+
     ```
     python model_span.py.py <BAM> <Dmin> <Dmax> <s> <m> <w> <out>
     ```
