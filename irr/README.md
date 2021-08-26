@@ -22,7 +22,7 @@ There are 2 steps in the process:
     
 	Output TSV columns: 
  	- `barcode`
- 	- `haplotype` 1 or 2 (extracted from the `HP` tag in the input BAM) or "na"
+ 	- `haplotype` 1 or 2 (extracted from the `HP` tags in the input BAM) or "na"
  	- `read name`
  	- `read1 sequence` (excluding barcode sequence for 10x reads)
  	- `read2 sequence`
