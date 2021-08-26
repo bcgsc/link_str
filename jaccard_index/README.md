@@ -27,7 +27,7 @@ We obtain a size estimate of a genomic (test) region in 2 steps:
     - `out` output file
     
     Some important arguments:
-	- `--cfg` configuration file specifying the locations of the chromsome sizes, gaps, and segdups files of the reference genome. See [example](genomes.cfg) for format
+	- `--cfg` configuration file specifying the locations of the chromsome sizes, gaps, and segdups files of the reference genome. See [example](genomes.cfg) for format and [hg19/hg38](genomes) files provided (source: [UCSC genome browser](http://genome.ucsc.edu/)) 
     - `--tech` "10x" (default) or "stlfr" or "tell_seq"
     - `--hap` "1" or "2", only use alignments of this haplotpye (specified by `HP` tag in BAM)
     - `--sw` window size on each side of the target region to identify barcodes and determine their spans Default: 200,000
