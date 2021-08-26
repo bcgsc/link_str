@@ -4,25 +4,25 @@ There are 2 steps in the process:
 
 1. Identify barcodes from the target region and extract reads given barcodes
 
- 	Because this script needs to iterate through every read in the input FASTQ files it may take hours to finish. 
+ 	Because this script needs to iterate through every read in the input FASTQs it may take hours to finish. 
 
     ```
-    python extract_irr.py <BAM> <coord> <out>
+    python extract_irr.py <BAM> <coord> <out> --fqs [fq1.gz fq2.gz]
     ```
  
 	Inputs:
 	- `BAM` LongRanger processed BAM for "10x" or "tell_seq" reads, where barcodes were extracted from the `BX` tags. For "stlfr" BAMs, barcodes were extracted from the read names
-	- `coord` "chrom start end". Make sure chromosome names agree with input BAM (i.e. with or without "chr")
+	- `coord` "chrom start end". Make sure chromosome names agree with input BAM (i.e. with or without "chr" prefix)
 	- `out` output file
     
 	Some important arguments:
 	- `--tech` "10x" (default) or "stlfr" or "tell_seq"
-	- `--fqs` paired FASTQs, interleaved format accepted only for "10x"
+	- `--fqs` (required) paired gzipped FASTQs, interleaved format accepted only for "10x"
 	- `--w` window size on each side of the target region to examine alignments. Default: 500 kb
     
 	Output TSV columns: 
  	- `barcode`
- 	- `haplotype` 1 or 2 or "na"
+ 	- `haplotype` 1 or 2 (extracted from the `HP` tag in the input BAM) or "na"
  	- `read name`
  	- `read1 sequence` (excluding barcode sequence for 10x reads)
  	- `read2 sequence`
@@ -43,8 +43,8 @@ There are 2 steps in the process:
  	- `genome fasta` path of genome reference fasta - for extracting flanking sequences of target region to determine **IRR anchors**
  
  	Some important arguments:
- 	- `--report` report of final tallies
- 	- `trf_out` output TRF file (from previous run on same input), TRF will not be run if provided
+ 	- `--report` report of final IRR tallies
+ 	- `trf_out` TRF output (from previous run on same input), TRF will not be run if provided
  	- `--tech` "10x" (default) or "stlfr" or "tell_seq"
  	- `--debug` will not remove TRF output if this is used
  
