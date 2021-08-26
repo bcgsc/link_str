@@ -9,8 +9,8 @@ This repository contains Python scripts developed to:
 - [Pandas](https://pandas.pydata.org/)
 - [pybedtools](https://daler.github.io/pybedtools/)
 - [pysam](https://github.com/pysam-developers/pysam)
-- [`TRF`](https://tandem.bu.edu/trf/trf.html) (for IRR extraction)
-- [`blastn`](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/) (for IRR extraction)
+- [TRF](https://tandem.bu.edu/trf/trf.html) (for IRR extraction)
+- [blastn](https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/) (for IRR extraction)
 
 Author: [Readman Chiu](mailto:rchiu@bcgsc.ca)
 
