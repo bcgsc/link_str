@@ -1,4 +1,4 @@
-# Analysis scripts developed for genotyping STRs in linked-read data
+# Genotyping STRs in linked-read data
 
 This repository contains Python scripts developed to:
 - extract in-repeat repeats (IRRs) using barcodes from linked-read alignments ([IRR extraction](irr))
