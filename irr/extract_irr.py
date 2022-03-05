@@ -4,9 +4,9 @@ from collections import defaultdict
 import gzip
 import argparse
 
-def extract_reads_10x(fqs, barcodes, hps, out_file):
+def extract_reads_10x(fqs, barcode2coords, barcode2hps, out_file):
     collected = defaultdict(list)
-    barcode_len = len(list(barcodes)[0])
+    barcode_len = len(list(barcode2coords.keys())[0])
     read_name = None
     with open(out_file, 'w') as out:
         with gzip.open(fqs[0], 'rt') as fq1, gzip.open(fqs[1], 'rt') as fq2:
@@ -19,17 +19,17 @@ def extract_reads_10x(fqs, barcodes, hps, out_file):
                     barcode = line1[:barcode_len]
                     seq1 = line1.rstrip()
                     seq2 = line2.rstrip()
-                    if barcode in barcodes:
-                        out.write('{} {} {} {} {}\n'.format(barcode, hps[barcode], read_name, seq1, seq2))
-                        #print(barcode, hps[barcode], read_name, seq1, seq2)
+                    if barcode in barcodes2coords:
+                        for coord in barcode2coords[barcode]:
+                            out.write('{} {} {} {} {} {}\n'.format(coord, barcode, barcode2hps[barcode], read_name, seq1, seq2))
+                            #print(coord, barcode, hps[barcode], read_name, seq1, seq2)
                         collected[barcode].append((read_name, seq1, seq2))
 
-def extract_reads_10x_interleaved(fq_gz, barcodes, hps, out_file, targets=None):
+def extract_reads_10x_interleaved(fq_gz, barcode2coords, barcode2hps, out_file, targets=None):
     collected = defaultdict(list)
-    barcode_len = len(list(barcodes)[0])
+    barcode_len = len(list(barcode2coords.keys())[0])
     read_name = None
     count = 1
-    print('bb', len(targets))
     with open(out_file, 'w') as out:
         with gzip.open(fq_gz, 'rt') as fq:
             for line in fq:
@@ -44,16 +44,17 @@ def extract_reads_10x_interleaved(fq_gz, barcodes, hps, out_file, targets=None):
                         seq2 = line.rstrip()
 
                         #print('zz', read_name, barcode, seq1, seq2)
-                        if barcode in barcodes:
+                        if barcode in barcode2coords:
                             if targets is not None and read_name not in targets:
                                 continue
-                            out.write('{} {} {} {} {}\n'.format(barcode, hps[barcode], read_name, seq1, seq2))
-                            print(barcode, hps[barcode], read_name, seq1, seq2)
+                            for coord in barcode2coords[barcode]:
+                                out.write('{} {} {} {} {} {}\n'.format(coord, barcode, barcode2hps[coord][barcode], read_name, seq1, seq2))
+                                #print(coord, barcode, barcode2hps[coord][barcode], read_name, seq1, seq2)
                             collected[barcode].append((read_name, seq1, seq2))
                 
                 count += 1
     
-def extract_reads_tell_seq(fqs, barcodes, hps, out_file):
+def extract_reads_tell_seq(fqs, barcode2coords, barcode2hps, out_file):
     # 3 fqs, last one barcode
     collected = defaultdict(list)
     read_name = None
@@ -69,12 +70,13 @@ def extract_reads_tell_seq(fqs, barcodes, hps, out_file):
                     seq1 = line1.rstrip()
                     seq2 = line2.rstrip()
                     #print('zz', read_name, barcode, seq1, seq2)
-                    if barcode in barcodes:
-                        out.write('{} {} {} {} {}\n'.format(barcode, hps[barcode], read_name, seq1, seq2))
-                        print(barcode, read_name, hps[barcode], seq1, seq2)
+                    if barcode in barcode2coords:
+                        for coord in barcode2coords[barcode]:
+                            out.write('{} {} {} {} {} {}\n'.format(coord, barcode, barcode2hps[coord][barcode], read_name, seq1, seq2))
+                            #print(coord, barcode, read_name, barcode2hps[coord][barcode], seq1, seq2)
                         collected[barcode].append((read_name, seq1, seq2)) 
 
-def extract_reads_stlfr(fqs, barcodes, hps, out_file):
+def extract_reads_stlfr(fqs, barcode2coords, barcode2hps, out_file):
     collected = defaultdict(list)
     read_name = None
     with open(out_file, 'w') as out:
@@ -89,12 +91,13 @@ def extract_reads_stlfr(fqs, barcodes, hps, out_file):
                 elif read_name is not None:
                     seq1 = line1.rstrip()
                     seq2 = line2.rstrip()
-                    if barcode in barcodes:
-                        out.write('{} {} {} {} {}\n'.format(barcode, hps[barcode], read_name, seq1, seq2))
-                        print(barcode, hps[barcode], read_name, seq1, seq2)
+                    if barcode in barcode2coords:
+                        for coord in barcode2coords[barcode]:
+                            out.write('{} {} {} {} {} {}\n'.format(coord, barcode, barcode2hps[coord][barcode], read_name, seq1, seq2))
+                            #print(coord, barcode, barcode2hps[coord][barcode], read_name, seq1, seq2)
                         collected[barcode].append((read_name, seq1, seq2))
 
-def extract_reads_stlfr_unzipped(fqs, barcodes, hps, out_file):
+def extract_reads_stlfr_unzipped(fqs, barcode2coords, bardode2hps, out_file):
     collected = defaultdict(list)
     read_name = None
     with open(out_file, 'w') as out:
@@ -109,9 +112,10 @@ def extract_reads_stlfr_unzipped(fqs, barcodes, hps, out_file):
                 elif read_name is not None:
                     seq1 = line1.rstrip()
                     seq2 = line2.rstrip()
-                    if barcode in barcodes:
-                        out.write('{} {} {} {} {}\n'.format(barcode, hps[barcode], read_name, seq1, seq2))
-                        print(barcode, hps[barcode], read_name, seq1, seq2)
+                    if barcode in barcode2coords:
+                        for coord in barcode2coords[barcode]:
+                            out.write('{} {} {} {} {} {}\n'.format(coord, barcode, barcode2hps[coord][barcode], read_name, seq1, seq2))
+                            #print(coord, barcode, barcode2hps[coord][barcode], read_name, seq1, seq2)
                         collected[barcode].append((read_name, seq1, seq2))
 
 def extract_aln_bc(aln, tech):
@@ -173,10 +177,11 @@ def get_barcodes(bam, chrom, start, end, w, tech, min_len=0, min_frags=2, close=
 
     return kept, hps
 
-def output_barcodes(barcodes, out_file):
+def output_barcodes(bc2_coords, out_file):
     with open(out_file, 'w') as out:
-        for bc in sorted(barcodes):
-            out.write('{}\n'.format(bc))
+        for bc, coords in bc2_coords.items():
+            for coord in coords:
+                out.write('{} {}\n'.format(coord, bc))
 
 def get_targets(infile):
     targets = set()
@@ -185,11 +190,20 @@ def get_targets(infile):
             targets.add(line.rstrip())
 
     return targets
-            
+
+def get_coords(bed_file):
+    coords = []
+    with open(bed_file, 'r') as ff:
+        for line in ff:
+            cols = line.rstrip().split('\t')
+            coords.append((cols[0], int(cols[1]), int(cols[2])))
+
+    return coords
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("bam", type=str, help="bam file")
-    parser.add_argument("coord", type=str, nargs=3, help="chrom start end")
+    parser.add_argument("coords", type=str, help="coords bed file")
     parser.add_argument("out", type=str, help="output file")
     parser.add_argument("--fqs", type=str, nargs='+', help="fastqs")
     parser.add_argument("--out_bc", type=str, help="output of list of barcodes")
@@ -204,29 +218,39 @@ def main():
     args = parse_args()
     bam = pysam.Samfile(args.bam, 'rb')
     
-    chrom = args.coord[0]
-    start = int(args.coord[1])
-    end = int(args.coord[2])
+    coords = get_coords(args.coords)
 
     targets = None
     if args.targets:
         targets = get_targets(args.targets)
 
-    barcodes, hps = get_barcodes(bam, chrom, start, end, args.w, args.tech, targets=targets)
+    barcode2coords = defaultdict(list)
+    barcode2hps = defaultdict(dict)
+    for chrom, start, end in coords:
+        coord = '{}:{}-{}'.format(chrom, start, end)
+        barcodes, hps = get_barcodes(bam, chrom, start, end, args.w, args.tech, targets=targets)
+        #print('qq', chrom, start, end, barcodes, hps)
+
+        for bc in barcodes:
+            barcode2coords[bc].append(coord)
+            
+        for bc in hps:
+            barcode2hps[coord] = hps
 
     if args.out_bc:
-        output_barcodes(barcodes, args.out_bc)
+        output_barcodes(barcode2coords, args.out_bc)
+
     if args.fqs:
         if len(args.fqs) == 2 and args.tech == '10x':
-            extract_reads_10x(args.fqs, barcodes, hps, args.out)
+            extract_reads_10x(args.fqs, barcode2coords, barcode2hps, args.out)
         elif len(args.fqs) == 3 and args.tech == 'tell_seq':
-            extract_reads_tell_seq(args.fqs, barcodes, hps, args.out)
+            extract_reads_tell_seq(args.fqs, barcode2coords, barcode2hps, args.out)
         elif len(args.fqs) == 2 and args.tech == 'stlfr':
             if args.unzipped:
-                extract_reads_stlfr_unzipped(args.fqs, barcodes, hps, args.out)
+                extract_reads_stlfr_unzipped(args.fqs, barcode2coords, barcode2hps, args.out)
             else:
-                extract_reads_stlfr(args.fqs, barcodes, hps, args.out)
+                extract_reads_stlfr(args.fqs, barcode2coords, barcode2hps, args.out)
         elif len(args.fqs) == 1 and args.tech == '10x':
-            extract_reads_10x_interleaved(args.fqs[0], barcodes, hps, args.out, targets=targets)
-    
+            extract_reads_10x_interleaved(args.fqs[0], barcode2coords, barcode2hps, args.out, targets=targets)
+
 main()

@@ -4,6 +4,7 @@ import os
 from collections import defaultdict
 import pysam
 import argparse
+import re
 
 def is_same_repeat(reps):
     if len(reps[0]) <= len(reps[1]):
@@ -42,14 +43,19 @@ def parse_trf(trf_output):
 
     return results
 
-def screen_trf(all_results, repeat, seqs, edge=10, min_repeat_frac=0.8):
-    repeat_rc = reverse_complement(repeat)
-
+def screen_trf(all_results, repeats, seqs, edge=10, min_repeat_frac=0.8):
     irrs = {}
     bcs = {}
     for seq, results in all_results.items():
+        coord, read, mate, bc, hap, rlen = seq.split('_')
+        if not coord in irrs:
+            irrs[coord] = {}
+        if not coord in bcs:
+            bcs[coord] = {}
         for r in results:
             matched_repeat = None
+            repeat = repeats[coord]
+            repeat_rc = reverse_complement(repeat)
 
             if is_same_repeat((r[13], repeat)):
                 matched_repeat = repeat
@@ -58,8 +64,8 @@ def screen_trf(all_results, repeat, seqs, edge=10, min_repeat_frac=0.8):
 
             if matched_repeat:
                 rtype = None
-                read, mate, bc, hap, rlen = seq.split('_')
-                bcs[read] = bc
+                #read, mate, bc, hap, rlen = seq.split('_')
+                bcs[coord][read] = bc
                 if r[0] <= edge and r[1] >= int(rlen) - edge:
                     rtype = ('full', matched_repeat)
                 elif r[1] - r[0] + 1 >= min_repeat_frac * int(rlen):
@@ -70,50 +76,55 @@ def screen_trf(all_results, repeat, seqs, edge=10, min_repeat_frac=0.8):
                     rtype = ('part_end', matched_repeat)
 
                 if rtype is not None:
-                    if not read in irrs:
-                        irrs[read] = {1:None, 2:None}
+                    if not read in irrs[coord]:
+                        irrs[coord][read] = {1:None, 2:None}
 
-                    irrs[read][int(mate)] = (rtype, r)
+                    irrs[coord][read][int(mate)] = (rtype, r)
 
-    pairs = []
+    pairs = {}
     anchors = {}
-    for read in sorted(irrs.keys()):
-        if irrs[read][1] and irrs[read][2]:
-            if irrs[read][1][0][0] == 'full' and irrs[read][2][0][0] == 'full':
-                if irrs[read][1][0][1] != irrs[read][2][0][1]:
-                    #print('ww', read, bcs[read], 'irr_pair')
-                    pairs.append(read)
+    for coord in irrs.keys():
+        pairs[coord] = []
+        anchors[coord] = {}
+        for read in sorted(irrs[coord].keys()):
+            if irrs[coord][read][1] and irrs[coord][read][2]:
+                if irrs[coord][read][1][0][0] == 'full' and irrs[coord][read][2][0][0] == 'full':
+                    if irrs[coord][read][1][0][1] != irrs[coord][read][2][0][1]:
+                        print('ww', coord, read, bcs[coord][read], 'irr_pair')
+                        pairs[coord].append(read)
 
-            # one full and one partial - anchor
-            elif irrs[read][1][0][0] == 'full' or irrs[read][2][0][0] == 'full':
-                if irrs[read][1][0][0] == 'full':
-                    m_full, m_part = 1,2
-                else:
-                    m_full, m_part = 2,1
-                    
-                # check if motifs are different
-                if irrs[read][m_full][0][1] != irrs[read][m_part][0][1]:
-                    anchors[read] = {}
-                    anchors[read][m_full] = 'full'
-                    if irrs[read][m_part][0][0] == 'part_start':
-                        seq = seqs[(read, m_part)][int(irrs[read][m_part][1][1]):]
+                # one full and one partial - anchor
+                elif irrs[coord][read][1][0][0] == 'full' or irrs[coord][read][2][0][0] == 'full':
+                    if irrs[coord][read][1][0][0] == 'full':
+                        m_full, m_part = 1,2
                     else:
-                        seq = seqs[(read, m_part)][:int(irrs[read][m_part][1][0])-1]
-                    # allow for sequencing errors
-                    if set(seq).issubset(set(irrs[read][m_part][1][13])):
-                        pairs.append(read)
-                    else:
-                        anchors[read][m_part] = seq
-                        print('nn', read, irrs[read][m_part], anchors[read][m_part])
+                        m_full, m_part = 2,1
+                        
+                    # check if motifs are different
+                    if irrs[coord][read][m_full][0][1] != irrs[coord][read][m_part][0][1]:
+                        anchors[coord][read] = {}
+                        anchors[coord][read][m_full] = 'full'
+                        if irrs[coord][read][m_part][0][0] == 'part_start':
+                            seq = seqs[(coord, read, m_part)][int(irrs[coord][read][m_part][1][1]):]
+                        else:
+                            seq = seqs[(coord, read, m_part)][:int(irrs[coord][read][m_part][1][0])-1]
+                        # allow for sequencing errors
+                        if set(seq).issubset(set(irrs[coord][read][m_part][1][13])):
+                            pairs[coord].append(read)
+                        else:
+                            anchors[coord][read][m_part] = seq
+                            print('nn', coord, read, irrs[coord][read][m_part], anchors[coord][read][m_part])
 
-        elif irrs[read][1] and irrs[read][1][0][0] == 'full':
-            seq = seqs[(read, 2)]
-            anchors[read] = {1:'full', 2:seq}
+            elif irrs[coord][read][1] and irrs[coord][read][1][0][0] == 'full':
+                seq = seqs[(coord, read, 2)]
+                anchors[coord][read] = {1:'full', 2:seq}
 
-        elif irrs[read][2] and irrs[read][2][0][0] == 'full':
-            seq = seqs[(read, 1)]
-            anchors[read] = {2:'full', 1:seq}
+            elif irrs[coord][read][2] and irrs[coord][read][2][0][0] == 'full':
+                seq = seqs[(coord, read, 1)]
+                anchors[coord][read] = {2:'full', 1:seq}
 
+    #print(pairs)
+    #print(anchors)
     return pairs, anchors
 
 def make_trf_fasta(in_file, out_file, tech):
@@ -129,32 +140,33 @@ def make_trf_fasta(in_file, out_file, tech):
     with open(out_file, 'w') as out:
         with open(in_file, 'r') as ff:
             for line in ff:
-                '''
-                if line[:3] != 'ggg':
-                    continue
-                cols = line.split()[1:]
-                '''
                 cols = line.split()
-                bc, hap, read = cols[:3]
+                coord, bc, hap, read = cols[:4]
+                if not coord in barcodes:
+                    barcodes[coord] = {}
+                if not coord in haps:
+                    haps[coord] = {}
+                if not coord in seqs:
+                    seqs[coord] = {}
                 # these 2 lines for stlfr
                 if '_' in read:
                     read = read.replace('_', ':')
                 if '_' in bc:
                     bc = bc.replace('_', ':')
 
-                barcodes[read] = bc
-                haps[read] = hap
+                barcodes[coord][read] = bc
+                haps[coord][read] = hap
                 seq1, seq2 = cols[-2:]
                 if len(seq1) == len(seq2):
                     seq1 = seq1[trim_len:]
 
-                h1 = '{}_1_{}_{}_{}'.format(read, bc, hap, len(seq1))
-                h2 = '{}_2_{}_{}_{}'.format(read, bc, hap, len(seq2))
+                h1 = '{}_{}_1_{}_{}_{}'.format(coord, read, bc, hap, len(seq1))
+                h2 = '{}_{}_2_{}_{}_{}'.format(coord, read, bc, hap, len(seq2))
 
                 out.write('>{}\n{}\n'.format(h1, seq1))
                 out.write('>{}\n{}\n'.format(h2, seq2))
-                seqs[(read, 1)] = seq1
-                seqs[(read, 2)] = seq2
+                seqs[(coord, read, 1)] = seq1
+                seqs[(coord, read, 2)] = seq2
 
     return seqs, barcodes, haps
 
@@ -220,39 +232,46 @@ def screen_anchors(blastn_results, subject_size, min_mapped=0.8, edge=10):
 
     return good
 
-def report(pairs, anchors, barcodes, haps, out_file=None):
+def report(pairs_all, anchors_all, barcodes_all, haps_all, out_file=None):
     lines = []
-    lines.append('total:{} {}'.format(len(pairs), len(anchors)))
-    
-    count_haps = {}
-    for read in pairs:
-        print('irr_pair', read, barcodes[read], haps[read])
-        hp = haps[read]
-        if not hp in count_haps:
-            count_haps[hp] = {'pair':0, 'anchor':0}
-        count_haps[hp]['pair'] += 1
-    for read in anchors:
-        hp = haps[read]
-        if not hp in count_haps:
-            count_haps[hp] = {'pair':0, 'anchor':0}
-        count_haps[hp]['anchor'] += 1
+    coords = set(list(pairs_all.keys()) + list(anchors_all.keys()))
+    for coord in sorted(list(coords)):
+        pairs = pairs_all[coord]
+        anchors = anchors_all[coord]
+        barcodes = barcodes_all[coord]
+        haps = haps_all[coord]
+        
+        lines.append('{} total: {} {}'.format(coord, len(pairs), len(anchors)))
+        
+        count_haps = {}
+        for read in pairs:
+            print('coord irr_pair', coord, read, barcodes[read], haps[read])
+            hp = haps[read]
+            if not hp in count_haps:
+                count_haps[hp] = {'pair':0, 'anchor':0}
+            count_haps[hp]['pair'] += 1
+        for read in anchors:
+            hp = haps[read]
+            if not hp in count_haps:
+                count_haps[hp] = {'pair':0, 'anchor':0}
+            count_haps[hp]['anchor'] += 1
 
-    count_barcodes = {}
-    for read in pairs:
-        bc = barcodes[read]
-        if not bc in count_barcodes:
-            count_barcodes[bc] = {'pair':0, 'anchor':0}
-        count_barcodes[bc]['pair'] += 1
-    for read in anchors:
-        bc = barcodes[read]
-        if not bc in count_barcodes:
-            count_barcodes[bc] = {'pair':0, 'anchor':0}
-        count_barcodes[bc]['anchor'] += 1
+        count_barcodes = {}
+        for read in pairs:
+            bc = barcodes[read]
+            if not bc in count_barcodes:
+                count_barcodes[bc] = {'pair':0, 'anchor':0}
+            count_barcodes[bc]['pair'] += 1
+        for read in anchors:
+            bc = barcodes[read]
+            if not bc in count_barcodes:
+                count_barcodes[bc] = {'pair':0, 'anchor':0}
+            count_barcodes[bc]['anchor'] += 1
 
-    for bc in sorted(count_barcodes.keys()):
-        lines.append('bc {}:{} {}'.format(bc, count_barcodes[bc]['pair'], count_barcodes[bc]['anchor']))
-    for hp in sorted(count_haps.keys()):
-        lines.append('hp {}:{} {}'.format(hp, count_haps[hp]['pair'], count_haps[hp]['anchor']))
+        for bc in sorted(count_barcodes.keys()):
+            lines.append('{} bc:{} {} {}'.format(coord, bc, count_barcodes[bc]['pair'], count_barcodes[bc]['anchor']))
+        for hp in sorted(count_haps.keys()):
+            lines.append('{} hp:{} {} {}'.format(coord, hp, count_haps[hp]['pair'], count_haps[hp]['anchor']))
 
     if out_file is None:
         for line in lines:
@@ -267,11 +286,20 @@ def reverse_complement(seq):
     complement = str.maketrans("agtcAGTC", "tcagTCAG")
     return seq[::-1].translate(complement)
 
+def get_motifs(bed_file):
+    motifs = {}
+    with open(bed_file, 'r') as ff:
+        for line in ff:
+            cols = line.rstrip().split('\t')
+            coord = '{}:{}-{}'.format(cols[0], cols[1], cols[2])
+            motifs[coord] = cols[3]
+
+    return motifs
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("extract_output", type=str, help="extract_out")
-    parser.add_argument("coord", type=str, nargs=3, help="STR locus coordinate: chromosome start end")
-    parser.add_argument("motif", type=str, help="STR motif")
+    parser.add_argument("coords", type=str, help="coords bed file")
     parser.add_argument("genome_fasta", type=str, help="genome_fasta")
     parser.add_argument("--report", type=str, help="report file")
     parser.add_argument("--trf_out", type=str, help="trf output")
@@ -283,7 +311,8 @@ def parse_args():
 def main():
     args = parse_args()
 
-    chrom, start, end = args.coord[0], int(args.coord[1]), int(args.coord[2])
+    motifs = get_motifs(args.coords)
+
     flank_size = 500
 
     tmp_files = []
@@ -297,21 +326,26 @@ def main():
     else:
         trf_results = parse_trf(args.trf_out)
         tmp_files.append(args.trf_out)
+
     if trf_results:
-        pairs, anchors = screen_trf(trf_results, args.motif.upper(), seqs)
+        pairs, anchors = screen_trf(trf_results, motifs, seqs)
     
+        anchors_passed = {}
         if anchors:
-            query_fa = 'anchors.fa'
-            subject_fa = 'flanks.fa'
-            blastn_out = 'anchors.blastn'
-            tmp_files.extend([query_fa, subject_fa, blastn_out])
-            make_blastn_query(anchors, query_fa)
-            make_blastn_subject(chrom, start, end, args.genome_fasta, subject_fa, size=flank_size)
-            results = run_blastn(query_fa, subject_fa, blastn_out)
+            for coord in sorted(anchors.keys()):
+                query_fa = '{}_anchors.fa'.format(coord)
+                subject_fa = '{}_flanks.fa'.format(coord)
+                blastn_out = '{}_anchors.blastn'.format(coord)
+                tmp_files.extend([query_fa, subject_fa, blastn_out]) 
+                
+                make_blastn_query(anchors[coord], query_fa)
+                chrom, start, end = re.split('[:-]', coord)
+                make_blastn_subject(chrom, int(start), int(end), args.genome_fasta, subject_fa, size=flank_size)
+                results = run_blastn(query_fa, subject_fa, blastn_out)
 
-            anchors_passed = screen_anchors(results, flank_size)
+                anchors_passed[coord] = screen_anchors(results, flank_size)
 
-            report(pairs, anchors_passed, barcodes, haps, out_file=args.report)
+        report(pairs, anchors_passed, barcodes, haps, out_file=args.report)
 
     # cleanup
     if not args.debug:
