@@ -97,7 +97,7 @@ def extract_reads_stlfr(fqs, barcode2coords, barcode2hps, out_file):
                             #print(coord, barcode, barcode2hps[coord][barcode], read_name, seq1, seq2)
                         collected[barcode].append((read_name, seq1, seq2))
 
-def extract_reads_stlfr_unzipped(fqs, barcode2coords, bardode2hps, out_file):
+def extract_reads_stlfr_unzipped(fqs, barcode2coords, barcode2hps, out_file):
     collected = defaultdict(list)
     read_name = None
     with open(out_file, 'w') as out:
