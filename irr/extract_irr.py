@@ -19,9 +19,9 @@ def extract_reads_10x(fqs, barcode2coords, barcode2hps, out_file):
                     barcode = line1[:barcode_len]
                     seq1 = line1.rstrip()
                     seq2 = line2.rstrip()
-                    if barcode in barcodes2coords:
+                    if barcode in barcode2coords:
                         for coord in barcode2coords[barcode]:
-                            out.write('{} {} {} {} {} {}\n'.format(coord, barcode, barcode2hps[barcode], read_name, seq1, seq2))
+                            out.write('{} {} {} {} {} {}\n'.format(coord, barcode, barcode2hps[coord][barcode], read_name, seq1, seq2))
                             #print(coord, barcode, hps[barcode], read_name, seq1, seq2)
                         collected[barcode].append((read_name, seq1, seq2))
 
@@ -234,8 +234,7 @@ def main():
         for bc in barcodes:
             barcode2coords[bc].append(coord)
             
-        for bc in hps:
-            barcode2hps[coord] = hps
+        barcode2hps[coord] = hps
 
     if args.out_bc:
         output_barcodes(barcode2coords, args.out_bc)
