@@ -66,7 +66,7 @@ There are 3 steps in the process:
 
 3. Estimate size
 
-	Interpreted from ExpansionHunter, this step estimate the repeat size from IRR counts, read length, and coverage
+	Interpreted from [ExpansionHunter](https://genome.cshlp.org/content/27/11/1895), this step estimate the repeat size from IRR counts, read length, and coverage
 
 	```
 	python get_irr_size.py <report from step 2> <BAM> <tech>
